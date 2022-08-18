@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
+import { PizzaFacade } from '../../pizza.facade';
 
 import { Pizza, Topping } from '../../pizza.interface';
 import { ToppingsValidator } from '../../toppings.validator';
@@ -45,16 +46,14 @@ export class PizzaFormComponent {
   @Output()
   add = new EventEmitter<FormGroup>();
 
-  form = this.fb.group({
-    name: ['', Validators.required],
-    toppings: this.fb.array([])
-  }, {
-    validator: ToppingsValidator
-  });
+  form: FormGroup;
 
   constructor(
-    private fb: FormBuilder
-  ) {}
+    private fb: FormBuilder,
+    private facade: PizzaFacade,
+  ) {
+    this.form = facade.buildForm();
+  }
 
   get control() {
     return this.form.get('toppings') as FormArray;
