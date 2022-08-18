@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, FormArray } from '@angular/forms';
 
 import { Topping } from '../../pizza.interface';
 
@@ -26,8 +26,6 @@ import { Topping } from '../../pizza.interface';
 })
 export class ToppingsSelectorComponent {
 
-  touched = false;
-
   @Input()
   parent: FormGroup;
 
@@ -40,10 +38,16 @@ export class ToppingsSelectorComponent {
   @Output()
   select = new EventEmitter<Topping>();
 
+  get control() {
+    return this.parent.get('toppings') as FormArray;
+  }
+
   get invalid() {
+    console.log('control.touched: ', this.control.touched);
+    console.log('control.pristine: ', this.control.pristine);
     return (
       this.parent.hasError('noToppings') &&
-      this.touched
+      this.control.touched
     );
   }
 
@@ -56,7 +60,6 @@ export class ToppingsSelectorComponent {
   }
 
   onSelect(topping: Topping) {
-    this.touched = true;
     this.select.emit(topping);
   }
 

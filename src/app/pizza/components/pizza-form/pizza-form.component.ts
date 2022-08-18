@@ -62,6 +62,7 @@ export class PizzaFormComponent {
 
   addTopping(topping: Topping) {
     this.control.push(new FormControl(topping));
+    this.control.markAsTouched();
   }
 
   removeTopping(index: number) {
@@ -77,11 +78,18 @@ export class PizzaFormComponent {
     }
   }
 
+  resetForm(): void {
+    this.control.clear();
+    this.control.reset();
+    this.form.reset();
+  }
+
   onSubmit() {
     if (this.form.invalid) {
       return;
     }
     this.add.emit(this.form.value);
+    this.resetForm();
   }
 
 }
