@@ -7,11 +7,8 @@ import {
   map,
   distinctUntilChanged,
   switchMap,
-  startWith,
-  tap,
   delay,
   debounceTime,
-  merge,
   filter,
 } from 'rxjs/operators';
 
@@ -19,22 +16,10 @@ import { Pizza, Topping } from './pizza.interface';
 import { PizzaService } from './pizza.service';
 import { ToppingsValidator } from './toppings.validator'
 
-export interface User {
-  gender: string;
-  name: {
-    first: string;
-    last: string;
-  };
-}
-
 export interface Pagination {
   selectedSize: number;
   currentPage: number;
   pageSizes: number[];
-}
-
-export interface RandomUserResponse {
-  results: User[];
 }
 
 export enum OperationType {
@@ -249,18 +234,6 @@ export class PizzaFacade {
     this.store.next((_state = state));
   }
 
-  /** RandomUser REST call */
-  private findAllUsers(
-    criteria: string,
-    pagination: Pagination
-  ): Observable<User[]> {
-    const url = buildUserUrl(criteria, pagination);
-    return this.http.get<RandomUserResponse>(url).pipe(
-      map((response) => response.results),
-      map(filterWithCriteria(criteria))
-    );
-  }
-
   private findAllPizzas(): Observable<Pizza[]> {
     return of(this.pizzaServer.getPizzas());
   }
@@ -274,36 +247,4 @@ export class PizzaFacade {
   private findAllToppings(): Observable<Topping[]> {
     return of(this.pizzaServer.getToppings());
   }
-}
-
-function buildUserUrl(criteria: string, pagination: Pagination): string {
-  const URL = 'https://randomuser.me/api/';
-  const currentPage = `page=${pagination.currentPage}`;
-  const pageSize = `results=${pagination.selectedSize}&`;
-  const searchFor = `seed=mindspaceDemo&inc=gender,name,nat`;
-
-  return `${URL}?${searchFor}&${pageSize}&${currentPage}`;
-}
-
-// ******************************************
-// Filter Utilities
-// ******************************************
-
-function contains(src, part) {
-  return (src || '').toLowerCase().indexOf(part.toLowerCase()) > -1;
-}
-
-function matchUser(who, criteria) {
-  const inFirst = contains(who.first, criteria);
-  const inLast = contains(who.last, criteria);
-
-  return !!criteria ? inFirst || inLast : true;
-}
-
-function filterWithCriteria(criteria) {
-  return (list) => {
-    return list.filter((it) => {
-      return matchUser(it.name, criteria);
-    });
-  };
 }

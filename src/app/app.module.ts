@@ -6,11 +6,10 @@ import { HttpClientModule } from '@angular/common/http'
 import { PizzaModule } from './pizza/pizza.module';
 
 import { AppComponent } from './app.component';
-import { HelloComponent } from './hello.component';
 
 @NgModule({
   imports:      [ BrowserModule, HttpClientModule, FormsModule, PizzaModule ],
-  declarations: [ AppComponent, HelloComponent ],
+  declarations: [ AppComponent ],
   bootstrap:    [ AppComponent ]
 })
 export class AppModule { }
