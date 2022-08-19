@@ -1,5 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, FormArray } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { PizzaFacade, PizzaState } from '../../pizza.facade';
 
 import { Topping } from '../../pizza.interface';
 
@@ -8,10 +10,10 @@ import { Topping } from '../../pizza.interface';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['toppings-selector.component.scss'],
   template: `
-    <div class="toppings-selector" [formGroup]="parent">
+    <div *ngIf="vm$ | async as vm" class="toppings-selector">
       <div
         class="toppings-selector__item"
-        *ngFor="let topping of toppings"
+        *ngFor="let topping of vm.toppings"
         [class.active]="isActive(topping)"
         (click)="onSelect(topping)">
         {{ topping }}
@@ -26,33 +28,33 @@ import { Topping } from '../../pizza.interface';
 })
 export class ToppingsSelectorComponent {
 
-  @Input()
-  parent: FormGroup;
-
-  @Input()
-  selected: Topping[];
-
-  @Input()
-  toppings: Topping[];
-
   @Output()
   select = new EventEmitter<Topping>();
 
+  vm$: Observable<PizzaState>;
+
+  form: FormGroup;
+
+  constructor(
+    private facade: PizzaFacade
+  ) {
+    this.vm$ = facade.vm$;
+    this.form = facade.form;
+  }
+
   get control() {
-    return this.parent.get('toppings') as FormArray;
+    return this.form.get('toppings') as FormArray;
   }
 
   get invalid() {
-    console.log('control.touched: ', this.control.touched);
-    console.log('control.pristine: ', this.control.pristine);
     return (
-      this.parent.hasError('noToppings') &&
+      this.form.hasError('noToppings') &&
       this.control.touched
     );
   }
 
   exists(topping: Topping) {
-    return !!~this.selected.indexOf(topping);
+    return !!~this.control.value.indexOf(topping);
   }
 
   isActive(topping: Topping) {

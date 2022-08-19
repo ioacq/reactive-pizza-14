@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
-import { PizzaFacade } from '../../pizza.facade';
+import { Observable } from 'rxjs';
+import { PizzaFacade, PizzaState } from '../../pizza.facade';
 
 import { Pizza, Topping } from '../../pizza.interface';
 import { ToppingsValidator } from '../../toppings.validator';
@@ -10,30 +11,28 @@ import { ToppingsValidator } from '../../toppings.validator';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['pizza-form.component.scss'],
   template: `
-    <form [formGroup]="form">
+    <form *ngIf="vm$ | async as vm" [formGroup]="form" (ngSubmit)="onSubmit()">
 
       <toppings-selector
-        [parent]="form"
-        [toppings]="toppings"
-        [selected]="control.value"
         (select)="selectTopping($event)">
       </toppings-selector>
 
-      <pizza-name 
-        [parent]="form">
+      <pizza-name>
       </pizza-name>
 
       <pizza-selected
-        [parent]="form"
         [selected]="control.value"
         (remove)="removeTopping($event)">
       </pizza-selected>
 
-      <pizza-button
-        [parent]="form"
-        (add)="onSubmit()">
-        Add pizza
-      </pizza-button>
+      <div class="pizza-button">
+        <button
+          type="submit"
+          [disabled]="form.invalid">
+          <img src="assets/add.svg">
+          Add pizza
+        </button>
+      </div>
 
     </form>
   `
@@ -46,12 +45,15 @@ export class PizzaFormComponent {
   @Output()
   add = new EventEmitter<FormGroup>();
 
+  vm$: Observable<PizzaState>;
+
   form: FormGroup;
 
   constructor(
     private fb: FormBuilder,
     private facade: PizzaFacade,
   ) {
+    this.vm$ = facade.vm$;
     this.form = facade.buildForm();
   }
 
@@ -87,7 +89,8 @@ export class PizzaFormComponent {
     if (this.form.invalid) {
       return;
     }
-    this.add.emit(this.form.value);
+
+    this.facade.addPizza(this.form.value);
     this.resetForm();
   }
 

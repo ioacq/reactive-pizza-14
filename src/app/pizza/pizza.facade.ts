@@ -12,6 +12,7 @@ import {
   delay,
   debounceTime,
   merge,
+  filter,
 } from 'rxjs/operators';
 
 import { Pizza, Topping } from './pizza.interface';
@@ -36,22 +37,41 @@ export interface RandomUserResponse {
   results: User[];
 }
 
+export enum OperationType {
+  Create,
+  Read,
+  Update,
+  Delete
+}
+
+export interface Operation {
+  type: OperationType;
+  model: Pizza
+}
+
 export interface PizzaState {
   pizzas: Pizza[];
   toppings: Topping[];
   pagination: Pagination;
-  criteria: string;
+  pizzaSearch: string;
+  toppingSearch: string;
+  operation: Operation;
   loading: boolean;
 }
 
 let _state: PizzaState = {
   pizzas: [],
   toppings: [],
-  criteria: '',
+  pizzaSearch: '',
+  toppingSearch: '',
   pagination: {
     currentPage: 0,
     selectedSize: 5,
     pageSizes: [5, 10, 20, 50],
+  },
+  operation: {
+    type: null,
+    model: null,
   },
   loading: false,
 };
@@ -69,12 +89,20 @@ export class PizzaFacade {
     map((state) => state.toppings),
     distinctUntilChanged()
   );
-  criteria$ = this.state$.pipe(
-    map((state) => state.criteria),
+  pizzaSearch$ = this.state$.pipe(
+    map((state) => state.pizzaSearch),
+    distinctUntilChanged()
+  );
+  toppingSearch$ = this.state$.pipe(
+    map((state) => state.toppingSearch),
     distinctUntilChanged()
   );
   pagination$ = this.state$.pipe(
     map((state) => state.pagination),
+    distinctUntilChanged()
+  );
+  operation$ = this.state$.pipe(
+    map((state) => state.operation),
     distinctUntilChanged()
   );
   loading$ = this.state$.pipe(map((state) => state.loading));
@@ -83,16 +111,28 @@ export class PizzaFacade {
    * Viewmodel that resolves once all the data is ready (or updated)...
    */
   vm$: Observable<PizzaState> = combineLatest(
-    this.pagination$,
-    this.criteria$,
     this.pizzas$,
     this.toppings$,
+    this.pizzaSearch$,
+    this.toppingSearch$,
+    this.pagination$,
+    this.operation$,
     this.loading$
   ).pipe(
-    map(([pagination, criteria, pizzas, toppings, loading]) => {
-      return { pagination, criteria, pizzas, toppings, loading };
+    map(([ pizzas, toppings, pizzaSearch, toppingSearch, pagination, operation, loading ]) => {
+      return {
+        pizzas,
+        toppings,
+        pizzaSearch,
+        toppingSearch,
+        pagination,
+        operation,
+        loading
+      };
     })
   );
+
+  form: FormGroup;
 
   /**
    * Watch 2 streams to trigger user loads and state updates
@@ -101,21 +141,50 @@ export class PizzaFacade {
     private http: HttpClient,
     private pizzaServer: PizzaService
   ) {
-    combineLatest(this.pizzas$, this.toppings$)
+    combineLatest(this.pizzaSearch$, this.pagination$)
       .pipe(
-        switchMap(([pizzas, toppings]) => {
-          console.log('switchMap pizzas', pizzas)
-          console.log('switchMap toppings', toppings)
-          return combineLatest(
-            this.findAllPizzas(),
-            this.findAllToppings()
-          )
+        switchMap(([pizzaSearch, pagination]) => {
+          console.log('switchMap pizzaSearch', pizzaSearch)
+          // TODO: pass the parameters pizzaSearch and pagination
+          return this.findAllPizzas();
         })
       )
-      .subscribe(([pizzas, toppings]) => {
+      .subscribe((pizzas) => {
         console.log('subscribe pizzas', pizzas)
+        this.updateState({ ..._state, pizzas, loading: false });
+      });
+
+    combineLatest(this.toppingSearch$)
+      .pipe(
+        switchMap(([toppingSearch]) => {
+          console.log('switchMap toppingSearch', toppingSearch)
+          // TODO: pass the parameter toppingSearch
+          return this.findAllToppings();
+        })
+      )
+      .subscribe((toppings) => {
         console.log('subscribe toppings', toppings)
-        this.updateState({ ..._state, pizzas, toppings, loading: false });
+        this.updateState({ ..._state, toppings, loading: false });
+      });
+
+    combineLatest(this.operation$)
+      .pipe(
+        filter(([operation]) => operation.type != null),
+        switchMap(([operation]) => {
+          console.log('OperationType:', operation.type)
+          switch (operation.type) {
+            case OperationType.Create:
+              return this.createPizza(operation);
+            default:
+              return of(operation);
+          }
+        })
+      )
+      .subscribe((operation) => {
+        console.log('Operation: ', operation);
+        const pizzas = [ ..._state.pizzas, operation.model ];
+        const newOperation = { ..._state.operation, type: null, model: null };
+        this.updateState({ ..._state, pizzas, operation: newOperation, loading: false });
       });
   }
 
@@ -130,7 +199,7 @@ export class PizzaFacade {
     const searchTerm = new FormControl();
     searchTerm.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe((value) => this.updateSearchCriteria(value));
+      .subscribe((value) => this.updatePizzaSearchCriteria(value));
 
     return searchTerm;
   }
@@ -146,11 +215,11 @@ export class PizzaFacade {
       validators: ToppingsValidator
     });
 
-    return formGroup;
+    return this.form = formGroup;
   }
 
-  updateSearchCriteria(criteria: string) {
-    this.updateState({ ..._state, criteria, loading: true });
+  updatePizzaSearchCriteria(pizzaSearch: string) {
+    this.updateState({ ..._state, pizzaSearch, loading: true });
   }
 
   updatePagination(selectedSize: number, currentPage: number = 0) {
@@ -159,8 +228,18 @@ export class PizzaFacade {
   }
 
   addPizza(pizza: Pizza): void {
-    const pizzas = [ ..._state.pizzas, pizza ];
-    this.updateState({ ..._state, pizzas, loading: true });
+    const operation = { ..._state.operation, type: OperationType.Create, model: pizza };
+    this.updateState({ ..._state, operation, loading: true });
+  }
+
+  updatePizza(pizza: Pizza): void {
+    const operation = { ..._state.operation, type: OperationType.Update, model: pizza };
+    this.updateState({ ..._state, operation, loading: true });
+  }
+
+  deletePizza(pizza: Pizza): void {
+    const operation = { ..._state.operation, type: OperationType.Delete, model: pizza };
+    this.updateState({ ..._state, operation, loading: true });
   }
 
   // ------- Private Methods ------------------------
@@ -183,13 +262,17 @@ export class PizzaFacade {
   }
 
   private findAllPizzas(): Observable<Pizza[]> {
-    return of(this.pizzaServer.getPizzas())
-      .pipe(debounceTime(5000));
+    return of(this.pizzaServer.getPizzas());
+  }
+
+  private createPizza(operation: Operation): Observable<Operation> {
+    // TODO: add call to http endpoint
+    return of(operation)
+      .pipe(delay(3000));
   }
 
   private findAllToppings(): Observable<Topping[]> {
-    return of(this.pizzaServer.getToppings())
-      .pipe(debounceTime(5000));
+    return of(this.pizzaServer.getToppings());
   }
 }
 
@@ -209,6 +292,7 @@ function buildUserUrl(criteria: string, pagination: Pagination): string {
 function contains(src, part) {
   return (src || '').toLowerCase().indexOf(part.toLowerCase()) > -1;
 }
+
 function matchUser(who, criteria) {
   const inFirst = contains(who.first, criteria);
   const inLast = contains(who.last, criteria);

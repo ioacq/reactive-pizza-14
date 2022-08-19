@@ -1,5 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormArray, FormGroup } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { PizzaFacade, PizzaState } from '../../pizza.facade';
 
 import { Topping } from '../../pizza.interface';
 
@@ -8,21 +10,21 @@ import { Topping } from '../../pizza.interface';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['pizza-selected.component.scss'],
   template: `
-    <div class="pizza-selected" [formGroup]="parent">
+    <div *ngIf="vm$ | async as vm" class="pizza-selected" [formGroup]="form">
       <div class="pizza-selected__empty" *ngIf="!selected.length">
         Select toppings to create pizza
       </div>
       <div
-        class="pizza-selected__list" 
+        class="pizza-selected__list"
         *ngIf="selected.length"
         formArrayName="toppings">
-        <div 
-          class="pizza-selected__item" 
+        <div
+          class="pizza-selected__item"
           *ngFor="let topping of selected; index as i;">
           <div [formGroupName]="i">
             <img src="assets/check.svg">
             {{ topping }}
-            <button 
+            <button
               type="button"
               (click)="onRemove(i)">
               <img src="assets/cross.svg">
@@ -35,14 +37,25 @@ import { Topping } from '../../pizza.interface';
 })
 export class PizzaSelectedComponent {
 
-  @Input()
-  parent: FormGroup;
-
-  @Input()
-  selected: Topping[];
+  @Input() selected: Topping[];
 
   @Output()
   remove = new EventEmitter<number>();
+
+  vm$: Observable<PizzaState>;
+
+  form: FormGroup;
+
+  constructor(
+    private facade: PizzaFacade
+  ) {
+    this.vm$ = facade.vm$;
+    this.form = facade.form;
+  }
+
+  get toppingsForm() {
+    return this.form.get('toppings') as FormArray;
+  }
 
   onRemove(index: number) {
     this.remove.emit(index);
