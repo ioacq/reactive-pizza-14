@@ -10,10 +10,10 @@ import { PizzaFacade, PizzaState } from '../../pizza.facade';
   template: `
     <div *ngIf="vm$ | async as vm" class="pizza-name" [formGroup]="form">
       <input 
-        type="text" 
+        type="text"
         placeholder="Pizza name, e.g. Blazin' hot" 
         formControlName="name">
-      <div 
+      <div
         class="error"
         *ngIf="invalid">
         Pizza name is required

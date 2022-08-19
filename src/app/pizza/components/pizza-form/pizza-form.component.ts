@@ -14,11 +14,21 @@ import { ToppingsValidator } from '../../toppings.validator';
     <form *ngIf="vm$ | async as vm" [formGroup]="form" (ngSubmit)="onSubmit()">
 
       <toppings-selector
+        [selected]="control.value"
         (select)="selectTopping($event)">
       </toppings-selector>
 
-      <pizza-name>
-      </pizza-name>
+      <div class="pizza-name">
+        <input
+          type="text"
+          placeholder="Pizza name, e.g. Blazin' hot"
+          formControlName="name">
+        <div
+          class="error"
+          *ngIf="invalid">
+          Pizza name is required
+        </div>
+      </div>
 
       <pizza-selected
         [selected]="control.value"
@@ -59,6 +69,13 @@ export class PizzaFormComponent {
 
   get control() {
     return this.form.get('toppings') as FormArray;
+  }
+
+  get invalid() {
+    return (
+      this.form.get('name').hasError('required') &&
+      this.form.get('name').touched
+    );
   }
 
   addTopping(topping: Topping) {

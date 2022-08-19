@@ -28,6 +28,9 @@ import { Topping } from '../../pizza.interface';
 })
 export class ToppingsSelectorComponent {
 
+  @Input()
+  selected: Topping[];
+
   @Output()
   select = new EventEmitter<Topping>();
 
