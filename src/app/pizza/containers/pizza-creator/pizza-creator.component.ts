@@ -34,4 +34,12 @@ export class PizzaCreatorComponent {
     this.vm$ = facade.vm$;
   }
 
+  ngOnInit() {
+    console.log('toppings-creator.component.OnInit')
+  }
+
+  ngOnChanges() {
+    console.log('toppings-creator.component.OnChanges')
+  }
+
 }

@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnInit, OnChanges } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PizzaFacade, PizzaState } from '../../pizza.facade';
 
@@ -18,7 +18,7 @@ import { Pizza } from '../../pizza.interface';
     </div>
   `
 })
-export class PizzaListComponent {
+export class PizzaListComponent implements OnInit, OnChanges {
 
   @Input()
   pizzas: Pizza[];
@@ -29,6 +29,14 @@ export class PizzaListComponent {
     private facade: PizzaFacade
   ) {
     this.vm$ = facade.vm$;
+  }
+
+  ngOnInit() {
+    console.log('pizza-list.component.OnInit')
+  }
+
+  ngOnChanges() {
+    console.log('pizza-list.component.OnChanges')
   }
 
 }

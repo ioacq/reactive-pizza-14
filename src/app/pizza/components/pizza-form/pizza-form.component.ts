@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { PizzaFacade, PizzaState } from '../../pizza.facade';
@@ -45,7 +45,7 @@ import { ToppingsValidator } from '../../toppings.validator';
     </form>
   `
 })
-export class PizzaFormComponent {
+export class PizzaFormComponent implements OnInit, OnChanges {
 
   @Output()
   add = new EventEmitter<FormGroup>();
@@ -72,6 +72,15 @@ export class PizzaFormComponent {
       this.form.get('name').touched
     );
   }
+
+  ngOnInit() {
+    console.log('pizza-form.component.OnInit')
+  }
+
+  ngOnChanges() {
+    console.log('pizza-form.component.OnChanges')
+  }
+
 
   addTopping(topping: Topping) {
     this.control.push(new FormControl(topping));
