@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnInit, OnChanges } from '@angular/core';
 import { FormGroup, FormArray } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { PizzaFacade, PizzaState } from '../../pizza.facade';
@@ -7,7 +7,6 @@ import { Topping } from '../../pizza.interface';
 
 @Component({
   selector: 'toppings-selector',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['toppings-selector.component.scss'],
   template: `
     <div *ngIf="vm$ | async as vm" class="toppings-selector">
@@ -26,7 +25,7 @@ import { Topping } from '../../pizza.interface';
     </div>
   `
 })
-export class ToppingsSelectorComponent {
+export class ToppingsSelectorComponent implements OnInit, OnChanges {
 
   @Input()
   selected: Topping[];
@@ -43,6 +42,8 @@ export class ToppingsSelectorComponent {
   ) {
     this.vm$ = facade.vm$;
     this.form = facade.form;
+
+    console.log('toppings-selector.component.constructor')
   }
 
   get control() {
@@ -54,6 +55,14 @@ export class ToppingsSelectorComponent {
       this.form.hasError('noToppings') &&
       this.control.touched
     );
+  }
+
+  ngOnInit() {
+    console.log('toppings-selector.component.OnInit')
+  }
+
+  ngOnChanges() {
+    console.log('toppings-selector.component.OnChanges')
   }
 
   exists(topping: Topping) {

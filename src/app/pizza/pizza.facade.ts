@@ -12,6 +12,7 @@ import {
   filter,
 } from 'rxjs/operators';
 
+import { Operation, OperationType } from '../interfaces/operation';
 import { Pizza, Topping } from './pizza.interface';
 import { PizzaService } from './pizza.service';
 import { ToppingsValidator } from './toppings.validator'
@@ -22,26 +23,15 @@ export interface Pagination {
   pageSizes: number[];
 }
 
-export enum OperationType {
-  Create,
-  Read,
-  Update,
-  Delete
-}
-
-export interface Operation {
-  type: OperationType;
-  model: Pizza
-}
-
 export interface PizzaState {
   pizzas: Pizza[];
   toppings: Topping[];
   pagination: Pagination;
   pizzaSearch: string;
   toppingSearch: string;
-  operation: Operation;
+  operation: Operation<Pizza>;
   loading: boolean;
+  detectChange: number;
 }
 
 let _state: PizzaState = {
@@ -59,6 +49,7 @@ let _state: PizzaState = {
     model: null,
   },
   loading: false,
+  detectChange: 0,
 };
 
 @Injectable()
@@ -91,6 +82,10 @@ export class PizzaFacade {
     distinctUntilChanged()
   );
   loading$ = this.state$.pipe(map((state) => state.loading));
+  detectChange$ = this.state$.pipe(
+    map((state) => state.detectChange),
+    distinctUntilChanged()
+  );
 
   /**
    * Viewmodel that resolves once all the data is ready (or updated)...
@@ -102,9 +97,10 @@ export class PizzaFacade {
     this.toppingSearch$,
     this.pagination$,
     this.operation$,
-    this.loading$
+    this.loading$,
+    this.detectChange$,
   ).pipe(
-    map(([ pizzas, toppings, pizzaSearch, toppingSearch, pagination, operation, loading ]) => {
+    map(([ pizzas, toppings, pizzaSearch, toppingSearch, pagination, operation, loading, detectChange ]) => {
       return {
         pizzas,
         toppings,
@@ -112,7 +108,8 @@ export class PizzaFacade {
         toppingSearch,
         pagination,
         operation,
-        loading
+        loading,
+        detectChange,
       };
     })
   );
@@ -154,7 +151,7 @@ export class PizzaFacade {
 
     combineLatest(this.operation$)
       .pipe(
-        filter(([operation]) => operation.type != null),
+        filter(([operation]) => !!operation && operation.type != null),
         switchMap(([operation]) => {
           console.log('OperationType:', operation.type)
           switch (operation.type) {
@@ -163,7 +160,8 @@ export class PizzaFacade {
             default:
               return of(operation);
           }
-        })
+        }),
+        delay(1)
       )
       .subscribe((operation) => {
         console.log('Operation: ', operation);
@@ -177,7 +175,12 @@ export class PizzaFacade {
 
   // Allows quick snapshot access to data for ngOnInit() purposes
   getStateSnapshot(): PizzaState {
-    return { ..._state, pagination: { ..._state.pagination } };
+    return { ..._state, pagination: { ..._state.pagination }, operation: { ..._state.operation } };
+  }
+
+  detectChange() {
+    const state = { ..._state, detectChange: _state.detectChange + 1 };
+    this.store.next((_state = state));
   }
 
   buildSearchTermControl(): FormControl {
@@ -238,10 +241,9 @@ export class PizzaFacade {
     return of(this.pizzaServer.getPizzas());
   }
 
-  private createPizza(operation: Operation): Observable<Operation> {
+  private createPizza(operation: Operation<Pizza>): Observable<Operation<Pizza>> {
     // TODO: add call to http endpoint
-    return of(operation)
-      .pipe(delay(3000));
+    return of(operation);
   }
 
   private findAllToppings(): Observable<Topping[]> {

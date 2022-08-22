@@ -8,7 +8,6 @@ import { Observable } from 'rxjs';
   selector: 'pizza-creator',
   styleUrls: ['pizza-creator.component.scss'],
   providers: [PizzaFacade],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div *ngIf="vm$ | async as vm" class="pizza-creator">
       <div class="pizza-creator__title">

@@ -5,7 +5,6 @@ import { PizzaFacade, PizzaState } from '../../pizza.facade';
 
 @Component({
   selector: 'pizza-name',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['pizza-name.component.scss'],
   template: `
     <div *ngIf="vm$ | async as vm" class="pizza-name" [formGroup]="form">
