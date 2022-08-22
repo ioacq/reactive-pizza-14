@@ -31,7 +31,7 @@ export interface PizzaState {
   toppingSearch: string;
   operation: Operation<Pizza>;
   loading: boolean;
-  detectChange: number;
+  counter: number; // To trigger view render
 }
 
 let _state: PizzaState = {
@@ -49,7 +49,7 @@ let _state: PizzaState = {
     model: null,
   },
   loading: false,
-  detectChange: 0,
+  counter: 0,
 };
 
 @Injectable()
@@ -82,8 +82,8 @@ export class PizzaFacade {
     distinctUntilChanged()
   );
   loading$ = this.state$.pipe(map((state) => state.loading));
-  detectChange$ = this.state$.pipe(
-    map((state) => state.detectChange),
+  counter$ = this.state$.pipe(
+    map((state) => state.counter),
     distinctUntilChanged()
   );
 
@@ -98,9 +98,9 @@ export class PizzaFacade {
     this.pagination$,
     this.operation$,
     this.loading$,
-    this.detectChange$,
+    this.counter$,
   ).pipe(
-    map(([ pizzas, toppings, pizzaSearch, toppingSearch, pagination, operation, loading, detectChange ]) => {
+    map(([ pizzas, toppings, pizzaSearch, toppingSearch, pagination, operation, loading, counter ]) => {
       return {
         pizzas,
         toppings,
@@ -109,7 +109,7 @@ export class PizzaFacade {
         pagination,
         operation,
         loading,
-        detectChange,
+        counter,
       };
     })
   );
@@ -178,8 +178,8 @@ export class PizzaFacade {
     return { ..._state, pagination: { ..._state.pagination }, operation: { ..._state.operation } };
   }
 
-  detectChange() {
-    const state = { ..._state, detectChange: _state.detectChange + 1 };
+  emitLatest() {
+    const state = { ..._state, counter: _state.counter + 1 };
     this.store.next((_state = state));
   }
 

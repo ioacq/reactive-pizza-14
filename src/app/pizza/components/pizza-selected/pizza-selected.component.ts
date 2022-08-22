@@ -8,6 +8,7 @@ import { Topping } from '../../pizza.interface';
 @Component({
   selector: 'pizza-selected',
   styleUrls: ['pizza-selected.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div *ngIf="vm$ | async as vm" class="pizza-selected" [formGroup]="form">
       <div class="pizza-selected__empty" *ngIf="!control.value.length">
@@ -35,8 +36,6 @@ import { Topping } from '../../pizza.interface';
   `
 })
 export class PizzaSelectedComponent implements OnInit, OnChanges {
-
-  @Input() selected: Topping[];
 
   @Output()
   remove = new EventEmitter<number>();

@@ -8,6 +8,7 @@ import { Topping } from '../../pizza.interface';
 @Component({
   selector: 'toppings-selector',
   styleUrls: ['toppings-selector.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div *ngIf="vm$ | async as vm" class="toppings-selector">
       <div
@@ -26,9 +27,6 @@ import { Topping } from '../../pizza.interface';
   `
 })
 export class ToppingsSelectorComponent implements OnInit, OnChanges {
-
-  @Input()
-  selected: Topping[];
 
   @Output()
   select = new EventEmitter<Topping>();

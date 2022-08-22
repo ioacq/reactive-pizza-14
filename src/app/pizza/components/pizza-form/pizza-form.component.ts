@@ -8,13 +8,12 @@ import { ToppingsValidator } from '../../toppings.validator';
 
 @Component({
   selector: 'pizza-form',
-
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['pizza-form.component.scss'],
   template: `
     <form *ngIf="vm$ | async as vm" [formGroup]="form" (ngSubmit)="onSubmit()">
 
       <toppings-selector
-        [selected]="control.value"
         (select)="selectTopping($event)">
       </toppings-selector>
 
@@ -31,7 +30,6 @@ import { ToppingsValidator } from '../../toppings.validator';
       </div>
 
       <pizza-selected
-        [selected]="control.value"
         (remove)="removeTopping($event)">
       </pizza-selected>
 
@@ -86,7 +84,7 @@ export class PizzaFormComponent {
   removeTopping(index: number) {
     this.control.removeAt(index);
 
-    // this.facade.detectChange();
+    this.facade.emitLatest();
   }
 
   selectTopping(topping: Topping) {
@@ -97,7 +95,7 @@ export class PizzaFormComponent {
       this.addTopping(topping);
     }
 
-    // this.facade.detectChange();
+    this.facade.emitLatest();
   }
 
   resetForm(): void {
