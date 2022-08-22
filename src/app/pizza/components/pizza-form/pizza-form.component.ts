@@ -47,9 +47,6 @@ import { ToppingsValidator } from '../../toppings.validator';
 })
 export class PizzaFormComponent {
 
-  @Input()
-  toppings: Topping[];
-
   @Output()
   add = new EventEmitter<FormGroup>();
 
