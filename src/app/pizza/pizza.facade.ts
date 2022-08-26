@@ -238,10 +238,10 @@ export class PizzaFacade {
     this.updateState({ ..._state, loading: true });
 
     of(pizza)
-    .subscribe((value) => {
-      const pizzas = [ ..._state.pizzas, pizza ];
-      this.updateState({ ..._state, pizzas, loading: false });
-    });
+      .subscribe((value) => {
+        const pizzas = [ ..._state.pizzas, pizza ];
+        this.updateState({ ..._state, pizzas, loading: false });
+      });
   }
 
   // ------- Private Methods ------------------------
