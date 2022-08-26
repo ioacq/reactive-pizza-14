@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
 
 import { Pizza, Topping } from './pizza.interface';
-
-import { BehaviorSubject, Observable } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
 
 export const PIZZAS: Pizza[] = [
   { name: 'New Yorker', toppings: ['Bacon', 'Pepperoni', 'Ham', 'Mushrooms'] },
@@ -17,38 +15,15 @@ export const TOPPINGS: Topping[] = [
   'Chicken', 'Pineapple', 'Ham', 'Jalapenos'
 ];
 
-export interface State {
-  pizzas: Pizza[],
-  toppings: Topping[]
-}
-
-const state: State = {
-  pizzas: PIZZAS,
-  toppings: TOPPINGS
-};
-
 @Injectable()
 export class PizzaService {
 
-  private subject = new BehaviorSubject<State>(state);
-  store = this.subject.asObservable()
-    .pipe(distinctUntilChanged());
-
-  select<T>(name: string): Observable<T> {
-    return this.store.pipe(map<State, T>(x => x[name]));
+  getPizzas(): Observable<Pizza[]> {
+    return of(PIZZAS);
   }
 
-  getPizzas(): Pizza[] {
-    return PIZZAS;
-  }
-
-  getToppings(): Topping[] {
-    return TOPPINGS;
-  }
-
-  addPizza(pizza: Pizza) {
-    const value = this.subject.value;
-    this.subject.next({ ...value, pizzas: [...value.pizzas, pizza] });
+  getToppings(): Observable<Topping[]> {
+    return of(TOPPINGS);
   }
 
 }

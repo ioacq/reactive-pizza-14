@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { PizzaFacade, PizzaState } from '../../pizza.facade';
 
 import { Observable } from 'rxjs';
+import { SampleFacade } from '../../../sample.facade';
 
 @Component({
   selector: 'pizza-creator',
@@ -29,7 +30,7 @@ export class PizzaCreatorComponent {
   vm$: Observable<PizzaState>;
 
   constructor(
-    private facade: PizzaFacade
+    private facade: PizzaFacade,
   ) {
     this.vm$ = facade.vm$;
   }

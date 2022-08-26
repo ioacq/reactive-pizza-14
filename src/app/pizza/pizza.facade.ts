@@ -1,35 +1,35 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
 
-import { BehaviorSubject, Observable, combineLatest, of } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, of, Subject } from 'rxjs';
 import {
   map,
   distinctUntilChanged,
   switchMap,
-  delay,
   debounceTime,
+  delay,
   filter,
+  tap,
 } from 'rxjs/operators';
 
 import { Operation, OperationType } from '../interfaces/operation';
+import { Pagination } from '../interfaces/pagination';
 import { Pizza, Topping } from './pizza.interface';
 import { PizzaService } from './pizza.service';
 import { ToppingsValidator } from './toppings.validator'
 
-export interface Pagination {
-  selectedSize: number;
-  currentPage: number;
-  pageSizes: number[];
+export interface PizzaForm {
+  name: FormControl<string|null>,
+  toppings: FormArray<FormControl<string>>,
 }
 
 export interface PizzaState {
   pizzas: Pizza[];
   toppings: Topping[];
-  pagination: Pagination;
   pizzaSearch: string;
   toppingSearch: string;
-  operation: Operation<Pizza>;
+  pagination: Pagination;
+  operation?: Operation<Pizza>;
   loading: boolean;
   counter: number; // To trigger view render
 }
@@ -120,7 +120,6 @@ export class PizzaFacade {
    * Watch 2 streams to trigger user loads and state updates
    */
   constructor(
-    private http: HttpClient,
     private pizzaServer: PizzaService
   ) {
     combineLatest(this.pizzaSearch$, this.pagination$)
@@ -149,38 +148,43 @@ export class PizzaFacade {
         this.updateState({ ..._state, toppings, loading: false });
       });
 
-    combineLatest(this.operation$)
-      .pipe(
-        filter(([operation]) => !!operation && operation.type != null),
-        switchMap(([operation]) => {
-          console.log('OperationType:', operation.type)
-          switch (operation.type) {
-            case OperationType.Create:
-              return this.createPizza(operation);
-            default:
-              return of(operation);
-          }
-        }),
-        delay(1)
-      )
-      .subscribe((operation) => {
-        console.log('Operation: ', operation);
-        const pizzas = [ ..._state.pizzas, operation.model ];
-        const newOperation = { ..._state.operation, type: null, model: null };
-        this.updateState({ ..._state, pizzas, operation: newOperation, loading: false });
-      });
+    // combineLatest(this.operation$)
+    //   .pipe(
+    //     tap(([operation]) => {
+    //       console.log('tap', operation);
+    //     }),
+    //     filter(([operation]) => operation && operation.type !== null),
+    //     switchMap(([operation]) => {
+    //       console.log('OperationType:', operation.type)
+
+    //       switch (operation.type) {
+    //         case OperationType.Create:
+    //           return this.createPizza(operation);
+    //         default:
+    //           return of(operation);
+    //       }
+    //     })
+    //   )
+    //   .subscribe((operation) => {
+    //     console.log('Operation: ', operation);
+        
+    //     if (operation.type === OperationType.Create) {
+    //       const pizzas = [ ..._state.pizzas, operation.model ];
+    //       this.updateState({ ..._state, pizzas, loading: false });
+    //     }
+    //   });
   }
 
   // ------- Public Methods ------------------------
 
   // Allows quick snapshot access to data for ngOnInit() purposes
   getStateSnapshot(): PizzaState {
-    return { ..._state, pagination: { ..._state.pagination }, operation: { ..._state.operation } };
+    return { ..._state, pagination: { ..._state.pagination } };
   }
 
   emitLatest() {
     const state = { ..._state, counter: _state.counter + 1 };
-    this.store.next((_state = state));
+    this.updateState(state);
   }
 
   buildSearchTermControl(): FormControl {
@@ -193,17 +197,22 @@ export class PizzaFacade {
   }
 
   buildForm(): FormGroup {
-    const formGroup = new FormGroup<{
-      name: FormControl<string|null>,
-      toppings: FormArray<FormControl<string>>,
-    }>({
+    const formGroup = new FormGroup<PizzaForm>({
       name: new FormControl(null, Validators.required),
-      toppings: new FormArray([])
+      toppings: this.buildToppingsControl(),
     }, {
       validators: ToppingsValidator
     });
 
     return this.form = formGroup;
+  }
+
+  buildToppingsControl(): FormArray {
+    const toppings = new FormArray([]);
+    toppings.valueChanges
+      .subscribe(() => this.emitLatest());
+
+    return toppings;
   }
 
   updatePizzaSearchCriteria(pizzaSearch: string) {
@@ -215,19 +224,24 @@ export class PizzaFacade {
     this.updateState({ ..._state, pagination, loading: true });
   }
 
-  addPizza(pizza: Pizza): void {
-    const operation = { ..._state.operation, type: OperationType.Create, model: pizza };
-    this.updateState({ ..._state, operation, loading: true });
+  doOperation(type: OperationType, model: Pizza) {
+    console.log('doOperation:', type);
+
+    this.updateState({ ..._state, loading: true });
+
+    const operation = { type: type, model: model };
+    // this.operation.next(operation);
   }
 
-  updatePizza(pizza: Pizza): void {
-    const operation = { ..._state.operation, type: OperationType.Update, model: pizza };
-    this.updateState({ ..._state, operation, loading: true });
-  }
+  addPizza(pizza: Pizza) {
+    // const operation = { type: OperationType.Create, model: pizza };
+    this.updateState({ ..._state, loading: true });
 
-  deletePizza(pizza: Pizza): void {
-    const operation = { ..._state.operation, type: OperationType.Delete, model: pizza };
-    this.updateState({ ..._state, operation, loading: true });
+    of(pizza)
+    .subscribe((value) => {
+      const pizzas = [ ..._state.pizzas, pizza ];
+      this.updateState({ ..._state, pizzas, loading: false });
+    });
   }
 
   // ------- Private Methods ------------------------
@@ -238,7 +252,7 @@ export class PizzaFacade {
   }
 
   private findAllPizzas(): Observable<Pizza[]> {
-    return of(this.pizzaServer.getPizzas());
+    return this.pizzaServer.getPizzas();
   }
 
   private createPizza(operation: Operation<Pizza>): Observable<Operation<Pizza>> {
@@ -247,6 +261,6 @@ export class PizzaFacade {
   }
 
   private findAllToppings(): Observable<Topping[]> {
-    return of(this.pizzaServer.getToppings());
+    return this.pizzaServer.getToppings();
   }
 }

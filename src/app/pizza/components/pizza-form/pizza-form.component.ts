@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { OperationType } from '../../../interfaces/operation';
 import { PizzaFacade, PizzaState } from '../../pizza.facade';
 
 import { Pizza, Topping } from '../../pizza.interface';
@@ -11,6 +12,8 @@ import { ToppingsValidator } from '../../toppings.validator';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['pizza-form.component.scss'],
   template: `
+    <p>Render count: {{ renderCounter() }}</p>
+
     <form *ngIf="vm$ | async as vm" [formGroup]="form" (ngSubmit)="onSubmit()">
 
       <toppings-selector
@@ -54,6 +57,8 @@ export class PizzaFormComponent implements OnInit, OnChanges {
 
   form: FormGroup;
 
+  private _counter = 0;
+
   constructor(
     private fb: FormBuilder,
     private facade: PizzaFacade,
@@ -81,7 +86,6 @@ export class PizzaFormComponent implements OnInit, OnChanges {
     console.log('pizza-form.component.OnChanges')
   }
 
-
   addTopping(topping: Topping) {
     this.control.push(new FormControl(topping));
     this.control.markAsTouched();
@@ -89,8 +93,6 @@ export class PizzaFormComponent implements OnInit, OnChanges {
 
   removeTopping(index: number) {
     this.control.removeAt(index);
-
-    this.facade.emitLatest();
   }
 
   selectTopping(topping: Topping) {
@@ -100,8 +102,6 @@ export class PizzaFormComponent implements OnInit, OnChanges {
     } else {
       this.addTopping(topping);
     }
-
-    this.facade.emitLatest();
   }
 
   resetForm(): void {
@@ -115,8 +115,13 @@ export class PizzaFormComponent implements OnInit, OnChanges {
       return;
     }
 
+    // this.facade.doOperation(OperationType.Create, this.form.value);
     this.facade.addPizza(this.form.value);
     this.resetForm();
+  }
+
+  public renderCounter(): number {
+    return ++this._counter;
   }
 
 }

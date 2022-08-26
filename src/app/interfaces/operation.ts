@@ -1,8 +1,8 @@
 export enum OperationType {
-  Create,
-  Read,
-  Update,
-  Delete
+  Create = "Create",
+  Read = "Read",
+  Update = "Update",
+  Delete = "Delete",
 }
 
 export interface Operation<T> {
