@@ -15,7 +15,9 @@ export const TOPPINGS: Topping[] = [
   'Chicken', 'Pineapple', 'Ham', 'Jalapenos'
 ];
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class PizzaService {
 
   getPizzas(): Observable<Pizza[]> {

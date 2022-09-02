@@ -18,11 +18,13 @@ import { PizzaService } from './pizza.service';
 
 // pipes
 import { JoinPipe } from './pipes/join.pipe';
+import { PizzaRoutingModule } from './pizza-routing.module';
 
 @NgModule({
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    PizzaRoutingModule,
   ],
   declarations: [
     PizzaCreatorComponent,
@@ -33,9 +35,6 @@ import { JoinPipe } from './pipes/join.pipe';
     PizzaButtonComponent,
     ToppingsSelectorComponent,
     JoinPipe
-  ],
-  providers: [
-    PizzaService
   ],
   exports: [
     PizzaCreatorComponent

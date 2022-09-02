@@ -12,8 +12,6 @@ import { ToppingsValidator } from '../../toppings.validator';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['pizza-form.component.scss'],
   template: `
-    <p>Render count: {{ renderCounter() }}</p>
-
     <form *ngIf="vm$ | async as vm" [formGroup]="form" (ngSubmit)="onSubmit()">
 
       <toppings-selector
@@ -56,8 +54,6 @@ export class PizzaFormComponent implements OnInit, OnChanges {
   vm$: Observable<PizzaState>;
 
   form: FormGroup;
-
-  private _counter = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -118,10 +114,6 @@ export class PizzaFormComponent implements OnInit, OnChanges {
     // this.facade.doOperation(OperationType.Create, this.form.value);
     this.facade.addPizza(this.form.value);
     this.resetForm();
-  }
-
-  public renderCounter(): number {
-    return ++this._counter;
   }
 
 }

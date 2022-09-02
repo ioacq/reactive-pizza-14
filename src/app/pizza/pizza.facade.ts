@@ -237,9 +237,15 @@ export class PizzaFacade {
     // const operation = { type: OperationType.Create, model: pizza };
     this.updateState({ ..._state, loading: true });
 
+    // TODO: call http endpoint
+    new Observable<Pizza>(observer => {
+      observer.next();
+      observer.complete();
+    });
     of(pizza)
+      .pipe(delay(3000))
       .subscribe((value) => {
-        const pizzas = [ ..._state.pizzas, pizza ];
+        const pizzas = [ ..._state.pizzas, value ];
         this.updateState({ ..._state, pizzas, loading: false });
       });
   }
